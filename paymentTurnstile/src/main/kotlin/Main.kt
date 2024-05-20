@@ -3,17 +3,9 @@ package paymentTurnstile
 import ru.nsk.kstatemachine.*
 import kotlinx.coroutines.*
 
-//class State(val price: Int = 0) : DefaultDataState<Int>(dataExtractor = defaultDataExtractor<Int>()) {
-//    var balance = 0
-//}
-//sealed class States : State() {
-//    object Locked : States()
-//    object Unlocked : States()
-//}
 sealed class Events : Event {
     class Coin(val coins: Int) : Events()
     data object Pass : Events()
-    data object Unlock: Events()
 }
 
 object Locked : DefaultState() {
@@ -71,7 +63,6 @@ class Customer(private var coins: Int = 0) {
         println("---------")
         payCoins(payment)
         turnstile.processEvent(Events.Coin(payment))
-        turnstile.processEvent(Events.Unlock)
         if (Unlocked.isActive)
             returnCoins(Locked.change())
     }
@@ -96,14 +87,12 @@ fun main() = runBlocking {
                 displayBalance()
             }
             transition<Events.Coin> {
-                onTriggered {
-                    Locked.processPayment(it.event.coins)
+                guard = {
+                    Locked.processPayment(event.coins)
                     Locked.displayPrice()
                     Locked.displayBalance()
+                    Locked.getBalance() >= Locked.getPrice()
                 }
-            }
-            transition<Events.Unlock> {
-                guard = {Locked.getBalance() >= Locked.getPrice()}
                 targetState = Unlocked
             }
             transition<Events.Pass> {
