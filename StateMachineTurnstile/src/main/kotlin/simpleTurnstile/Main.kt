@@ -1,20 +1,21 @@
-package turnstile
+package simpleTurnstile
 
 import ru.nsk.kstatemachine.*
 import kotlinx.coroutines.*
+import ru.nsk.kstatemachine.DefaultState
 import ru.nsk.kstatemachine.Event
 
 sealed class States : DefaultState() {
     object Locked : States()
     object Unlocked : States()
 }
-
 sealed class Events : Event {
     data object Coin : Events()
     data object Pass : Events()
 }
 
-fun main(): Unit = runBlocking {
+
+fun main() = runBlocking {
     val turnstile = createStateMachine(this) {
         addInitialState(States.Locked) {
             onEntry { println("The turnstile is LOCKED. Please, enter a coin to pass.") }
